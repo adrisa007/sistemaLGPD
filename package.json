@@ -1,0 +1,16 @@
+{
+  "name": "sistemalgpd",
+  "version": "1.0.0",
+  "description": "echo \"# sistemaLGPD\" >> README.md git init git add README.md git commit -m \"first commit\" git branch -M main git remote add origin https://github.com/adrisa007/sistemaLGPD.git git push -u origin main",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.11"
+  }
+}
