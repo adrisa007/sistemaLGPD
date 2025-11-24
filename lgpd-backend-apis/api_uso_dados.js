@@ -1,14 +1,11 @@
 // api_uso_dados.js
 const express = require('express');
-const { query } = require('./db');
-const app = express();
+const { pool } = require('./db');
+const router = express.Router();
 const axios = require('axios'); // NOVO: Para chamada assíncrona
-app.use(express.json());
-
-const port = process.env.PORT || 8080;
 
 // Rota de saúde (Health Check)
-app.get('/', (req, res) => {
+router.get('/health', (req, res) => {
   res.status(200).json({
     message: "API de Uso de Dados (Fase 2) - OK",
     service: "uso_dados"
@@ -20,7 +17,7 @@ app.get('/', (req, res) => {
 // ##################################################################
 
 // POST /titulares: Cria um novo Titular
-app.post('/titulares', async (req, res) => {
+router.post('/titulares', async (req, res) => {
   const { id_entidade, cpf, nome } = req.body;
   
   if (!id_entidade || !cpf || !nome) {
@@ -32,7 +29,7 @@ app.post('/titulares', async (req, res) => {
       INSERT INTO TITULARES_DADOS (ID_ENTIDADE, CPF, NOME)
       VALUES (?, ?, ?)
     `;
-    const result = await query(sql, [id_entidade, cpf, nome]);
+    const [result] = await pool.execute(sql, [id_entidade, cpf, nome]);
     
     res.status(201).json({ 
       message: "Titular cadastrado com sucesso.", 
@@ -52,7 +49,7 @@ app.post('/titulares', async (req, res) => {
 // ##################################################################
 
 // GET /usos/:id_uso/check: Checagem do Acesso (Filtros 2 e 3) - Etapa 7
-app.get('/usos/:id_uso/check', async (req, res) => {
+router.get('/usos/:id_uso/check', async (req, res) => {
   const { id_uso } = req.params;
   const { usuario_acessor_cpf } = req.query; // CPF do Operador/Prestador (Filtro Nível 2)
 
@@ -70,7 +67,7 @@ app.get('/usos/:id_uso/check', async (req, res) => {
       ORDER BY T.DATA_VENCIMENTO_TC DESC
       LIMIT 1
     `;
-    const tcResult = await query(sqlFiltro2, [usuario_acessor_cpf]);
+    const [tcResult] = await pool.execute(sqlFiltro2, [usuario_acessor_cpf]);
     const tcStatus = tcResult.length > 0 ? tcResult[0].STATUS_TC : 'Não Aprovado';
     const tcVencimento = tcResult.length > 0 ? tcResult[0].DATA_VENCIMENTO_TC : null;
 
@@ -95,7 +92,7 @@ app.get('/usos/:id_uso/check', async (req, res) => {
       WHERE U.ID_USO = ?
       GROUP BY U.ID_USO
     `;
-    const usoResult = await query(sqlFiltro3, [id_uso]);
+    const [usoResult] = await pool.execute(sqlFiltro3, [id_uso]);
 
     if (usoResult.length === 0) {
       return res.status(404).json({ error: "Registro de Uso não encontrado." });
@@ -149,7 +146,7 @@ app.get('/usos/:id_uso/check', async (req, res) => {
 });
 
 // POST /usos: Cria um novo Registro de Uso - Etapa 6
-app.post('/usos', async (req, res) => {
+router.post('/usos', async (req, res) => {
   const { id_titular, id_local_arq, dono_temporario, finalidades } = req.body;
   
   if (!id_titular || !finalidades || finalidades.length === 0) {
@@ -164,7 +161,7 @@ app.post('/usos', async (req, res) => {
       INSERT INTO USOS_POR_TITULAR (ID_TITULAR, ID_LOCAL_ARQ, DONO_TEMPORARIO, STATUS_USO)
       VALUES (?, ?, ?, ?)
     `;
-    const resultUso = await query(sqlUso, [id_titular, id_local_arq || null, dono_temporario || null, status_uso]);
+    const [resultUso] = await pool.execute(sqlUso, [id_titular, id_local_arq || null, dono_temporario || null, status_uso]);
     const id_uso = resultUso.insertId;
 
     // 2. Inserir na USO_FINALIDADE_ASSOCIACAO (N:M)
@@ -173,7 +170,7 @@ app.post('/usos', async (req, res) => {
       VALUES ?
     `;
     const associacaoValues = finalidades.map(id_finalidade => [id_uso, id_finalidade]);
-    await query(sqlAssociacao, [associacaoValues]);
+    await pool.query(sqlAssociacao, [associacaoValues]); // .query é melhor para INSERT com múltiplos valores
 
     // Lógica 2 (Restrição de Prazo): Calcular DATA_DESCARTE com base na MAIOR DATA_MAX_VENCIMENTO das finalidades.
     const finalidadesPlaceholders = finalidades.map(() => '?').join(',');
@@ -182,7 +179,7 @@ app.post('/usos', async (req, res) => {
       FROM FINALIDADES_REGISTRO
       WHERE ID_FINALIDADE IN (${finalidadesPlaceholders})
     `;
-    const [maxDateResult] = await query(sqlMaxDate, finalidades);
+    const [maxDateResult] = await pool.execute(sqlMaxDate, finalidades);
     const data_descarte = maxDateResult[0].data_descarte;
 
     // 3. Atualizar USOS_POR_TITULAR com a DATA_DESCARTE calculada
@@ -191,7 +188,7 @@ app.post('/usos', async (req, res) => {
       SET DATA_DESCARTE = ?
       WHERE ID_USO = ?
     `;
-    await query(sqlUpdateUso, [data_descarte, id_uso]);
+    await pool.execute(sqlUpdateUso, [data_descarte, id_uso]);
 
     res.status(201).json({ 
       message: "Registro de Uso criado com sucesso.", 
@@ -203,6 +200,4 @@ app.post('/usos', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API de Uso de Dados rodando na porta ${port}`);
-});
+module.exports = router;

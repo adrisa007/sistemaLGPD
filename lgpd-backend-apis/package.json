@@ -2,9 +2,9 @@
   "name": "lgpd-backend-apis",
   "version": "1.0.0",
   "description": "APIs de Governança, Uso de Dados, Auditoria, Solicitações e Relatórios para o Sistema de Conformidade LGPD",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node index.js",
     "test": "jest"
   },
   "dependencies": {

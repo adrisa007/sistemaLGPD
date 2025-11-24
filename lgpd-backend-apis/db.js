@@ -28,6 +28,8 @@ const testConnection = async () => {
     connection.release(); // Libera a conexão de volta para o pool
   } catch (error) {
     console.error('Failed to connect to the database:', error);
+    // Em um ambiente de produção, você pode querer encerrar o processo se a conexão com o DB falhar na inicialização
+    // process.exit(1);
     console.error('Application will exit...');
     process.exit(1); // Encerra a aplicação se a conexão com o DB falhar na inicialização
   }

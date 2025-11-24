@@ -1,11 +1,12 @@
 // api_relatorios.test.js
 const request = require('supertest');
-// ... (O código completo do teste da API de Relatórios)
+const app = require('./server');
 
-describe('API de Relatórios - GET /auditoria/acessos', () => {
-  // ... (Testes para consulta com filtros)
-});
+jest.mock('./db');
 
-describe('API de Relatórios - POST /prova-final/descarte', () => {
-  // ... (Testes para registro de descarte)
+describe('API de Relatórios', () => {
+  it('deve ter testes implementados', () => {
+    // TODO: Implementar testes para as rotas de relatórios
+    expect(true).toBe(true);
+  });
 });

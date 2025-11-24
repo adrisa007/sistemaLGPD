@@ -1,13 +1,10 @@
 // api_solicitacoes.js
 const express = require('express');
-const { query } = require('./db'); // Importa o módulo de conexão
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 8080;
+const { pool } = require('./db'); // Importa o módulo de conexão
+const router = express.Router();
 
 // Rota de saúde (Health Check)
-app.get('/', (req, res) => {
+router.get('/health', (req, res) => {
   res.status(200).json({
     message: "API de Solicitações (Fase 3) - OK",
     service: "solicitacoes"
@@ -19,7 +16,7 @@ app.get('/', (req, res) => {
 // ##################################################################
 
 // POST /solicitacoes: Registra uma nova solicitação do titular
-app.post('/solicitacoes', async (req, res) => {
+router.post('/', async (req, res) => {
   const { id_titular, tipo_solicitacao, descricao_solicitacao } = req.body;
   
   if (!id_titular || !tipo_solicitacao) {
@@ -34,7 +31,7 @@ app.post('/solicitacoes', async (req, res) => {
       INSERT INTO SOLICITACOES_LGPD (ID_TITULAR, TIPO_SOLICITACAO, DESCRICAO_SOLICITACAO, STATUS_SOLICITACAO)
       VALUES (?, ?, ?, ?)
     `;
-    const result = await query(sql, [id_titular, tipo_solicitacao, descricao_solicitacao || null, status_solicitacao]);
+    const [result] = await pool.execute(sql, [id_titular, tipo_solicitacao, descricao_solicitacao || null, status_solicitacao]);
     
     res.status(201).json({ 
       message: "Solicitação registrada com sucesso.", 
@@ -48,7 +45,7 @@ app.post('/solicitacoes', async (req, res) => {
 });
 
 // GET /solicitacoes/:id_titular: Lista todas as solicitações de um titular
-app.get('/solicitacoes/:id_titular', async (req, res) => {
+router.get('/titular/:id_titular', async (req, res) => {
   const { id_titular } = req.params;
   
   try {
@@ -57,7 +54,7 @@ app.get('/solicitacoes/:id_titular', async (req, res) => {
       WHERE ID_TITULAR = ?
       ORDER BY DATA_SOLICITACAO DESC
     `;
-    const solicitacoes = await query(sql, [id_titular]);
+    const [solicitacoes] = await pool.execute(sql, [id_titular]);
     
     res.status(200).json(solicitacoes);
   } catch (error) {
@@ -67,7 +64,7 @@ app.get('/solicitacoes/:id_titular', async (req, res) => {
 });
 
 // PUT /solicitacoes/:id_solicitacao: Atualiza o status de uma solicitação (para uso interno)
-app.put('/solicitacoes/:id_solicitacao', async (req, res) => {
+router.put('/:id_solicitacao', async (req, res) => {
   const { id_solicitacao } = req.params;
   const { status_solicitacao, resultado_processamento } = req.body;
   
@@ -81,7 +78,7 @@ app.put('/solicitacoes/:id_solicitacao', async (req, res) => {
       SET STATUS_SOLICITACAO = ?, RESULTADO_PROCESSAMENTO = ?
       WHERE ID_SOLICITACAO = ?
     `;
-    const result = await query(sql, [status_solicitacao, resultado_processamento || null, id_solicitacao]);
+    const [result] = await pool.execute(sql, [status_solicitacao, resultado_processamento || null, id_solicitacao]);
     
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Solicitação não encontrada." });
@@ -98,6 +95,4 @@ app.put('/solicitacoes/:id_solicitacao', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API de Solicitações rodando na porta ${port}`);
-});
+module.exports = router;

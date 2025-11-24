@@ -1,13 +1,10 @@
 // api_relatorios.js
 const express = require('express');
-const { query } = require('./db'); // Importa o módulo de conexão
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 8080;
+const { pool } = require('./db'); // Importa o módulo de conexão
+const router = express.Router();
 
 // Rota de saúde (Health Check)
-app.get('/', (req, res) => {
+router.get('/health', (req, res) => {
   res.status(200).json({
     message: "API de Relatórios/Auditoria (Fase 4) - OK",
     service: "relatorios"
@@ -19,7 +16,7 @@ app.get('/', (req, res) => {
 // ##################################################################
 
 // GET /auditoria/acessos: Lista logs de acesso com filtros
-app.get('/auditoria/acessos', async (req, res) => {
+router.get('/auditoria/acessos', async (req, res) => {
   const { id_uso, usuario_acessor, data_inicio, data_fim } = req.query;
   
   let sql = `
@@ -48,7 +45,7 @@ app.get('/auditoria/acessos', async (req, res) => {
   sql += ` ORDER BY DATA_ACESSO DESC`;
 
   try {
-    const logs = await query(sql, params);
+    const [logs] = await pool.execute(sql, params);
     res.status(200).json(logs);
   } catch (error) {
     console.error("Erro ao listar logs de acesso:", error);
@@ -61,7 +58,7 @@ app.get('/auditoria/acessos', async (req, res) => {
 // ##################################################################
 
 // POST /prova-final/descarte: Registra a prova de descarte
-app.post('/prova-final/descarte', async (req, res) => {
+router.post('/prova-final/descarte', async (req, res) => {
   const { id_titular, id_uso, motivo_descarte, hash_prova } = req.body;
   
   if (!id_titular || !id_uso || !motivo_descarte || !hash_prova) {
@@ -73,7 +70,7 @@ app.post('/prova-final/descarte', async (req, res) => {
       INSERT INTO REGISTRO_DESCARTE (ID_TITULAR, ID_USO, MOTIVO_DESCARTE, HASH_PROVA)
       VALUES (?, ?, ?, ?)
     `;
-    const result = await query(sql, [id_titular, id_uso, motivo_descarte, hash_prova]);
+    const [result] = await pool.execute(sql, [id_titular, id_uso, motivo_descarte, hash_prova]);
     
     // TODO: A lógica de atualização do STATUS_USO para 'Descartado' na api_uso_dados.js deve ser implementada
     // por um processo assíncrono (ex: Cloud Function acionada por Pub/Sub) após o registro da prova.
@@ -89,7 +86,7 @@ app.post('/prova-final/descarte', async (req, res) => {
 });
 
 // GET /prova-final/descarte/:id_titular: Lista provas de descarte por titular
-app.get('/prova-final/descarte/:id_titular', async (req, res) => {
+router.get('/prova-final/descarte/:id_titular', async (req, res) => {
   const { id_titular } = req.params;
   
   try {
@@ -98,7 +95,7 @@ app.get('/prova-final/descarte/:id_titular', async (req, res) => {
       WHERE ID_TITULAR = ?
       ORDER BY DATA_REGISTRO DESC
     `;
-    const registros = await query(sql, [id_titular]);
+    const [registros] = await pool.execute(sql, [id_titular]);
     
     res.status(200).json(registros);
   } catch (error) {
@@ -107,6 +104,4 @@ app.get('/prova-final/descarte/:id_titular', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API de Relatórios/Auditoria rodando na porta ${port}`);
-});
+module.exports = router;
