@@ -16,7 +16,7 @@ steps:
   args:
   - 'build'
   - '-t'
-  - 'gcr.io/$PROJECT_ID/lgpd-backend-apis:$COMMIT_SHA'
+  - '${_AR_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO_NAME}/lgpd-backend-apis:$COMMIT_SHA' # NOVO CAMINHO
   - '.'
 
 # Passo 3: Enviar a imagem para o Artifact Registry
@@ -24,7 +24,7 @@ steps:
   id: Push Imagem
   args:
   - 'push'
-  - 'gcr.io/$PROJECT_ID/lgpd-backend-apis:$COMMIT_SHA'
+  - '${_AR_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO_NAME}/lgpd-backend-apis:$COMMIT_SHA' # NOVO CAMINHO
 
 # ##################################################################
 # PASSOS DE DEPLOY PARA O MONOLITO MODULAR (Cloud Run)
@@ -34,17 +34,15 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Deploy Monolito LGPD
   entrypoint: 'bash'
+  # cloudbuild.yaml (Trecho - Passo 4: Deploy Monolito LGPD)
+  # ...
   args:
-  - '-c'
-  - |
-    gcloud run deploy lgpd-api-gateway \
-      --image gcr.io/$PROJECT_ID/lgpd-backend-apis:$COMMIT_SHA \
-      --region us-central1 \
-      --platform managed \
-      --allow-unauthenticated \
-      --set-cloudsql-instances ${_INSTANCE_CONNECTION_NAME} \
-      --set-env-vars "DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},INSTANCE_CONNECTION_NAME=${_INSTANCE_CONNECTION_NAME}" \
-      --update-secrets=DB_PASSWORD=db-password:latest
+  - 'run'
+  - 'deploy'
+  - 'lgpd-api-gateway'
+  - '--image'
+  - '${_AR_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO_NAME}/lgpd-backend-apis:$COMMIT_SHA' # NOVO CAMINHO
+  # ...
 
 # ##################################################################
 # VARIÁVEIS DE SUBSTITUIÇÃO (Definidas no Gatilho do Cloud Build)
@@ -55,3 +53,6 @@ substitutions:
   _DB_NAME: 'lgpd_db' # Nome do Banco de Dados
   _INSTANCE_CONNECTION_NAME: 'project-id:region:instance-name' # Conexão do Cloud SQL
   _API_AUDITORIA_URL: 'https://api-auditoria-xxxxxxxx-uc.a.run.app' # URL da API de Auditoria (DEVE SER ATUALIZADA APÓS O PRIMEIRO DEPLOY)
+  # ... (outras variáveis) ...
+  _AR_REPO_NAME: 'lgpd-backend-repo' # Nome do repositório que você criou
+  _AR_REGION: 'us-central1' # Região do repositório
