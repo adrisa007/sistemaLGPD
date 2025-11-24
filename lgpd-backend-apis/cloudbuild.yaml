@@ -4,12 +4,8 @@
 
 steps:
 # Passo 1: Instalar dependências e executar testes unitários
-# O Cloud Build usa o estágio 'builder' do Dockerfile para rodar os testes
-- name: 'node:20-slim'
 - name: 'gcr.io/cloud-builders/npm'
   id: Testes Unitários
-  entrypoint: 'npm'
-  args: ['test']
   entrypoint: 'bash'
   args: ['-c', 'npm install && npm test']
 
