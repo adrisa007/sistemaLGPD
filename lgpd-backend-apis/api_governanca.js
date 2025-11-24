@@ -1,13 +1,10 @@
 // api_governanca.js
 const express = require('express');
 const { query } = require('./db');
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 8080;
+const router = express.Router(); // Use o Router do Express
 
 // Rota de saúde (Health Check)
-app.get('/', (req, res) => {
+router.get('/health', (req, res) => { // Mude a rota para não conflitar com a raiz
   res.status(200).json({
     message: "API de Governança (Fase 1) - OK",
     service: "governanca"
@@ -15,7 +12,7 @@ app.get('/', (req, res) => {
 });
 
 // Rotas para ENTIDADES (Controladores)
-app.post('/entidades', async (req, res) => {
+router.post('/entidades', async (req, res) => {
   const { cnpj, razao_social, email_contato, endereco_completo } = req.body;
   
   if (!cnpj || !razao_social) {
@@ -40,7 +37,7 @@ app.post('/entidades', async (req, res) => {
 });
 
 // Rotas para CARGOS (Perfis de Acesso)
-app.post('/cargos', async (req, res) => {
+router.post('/cargos', async (req, res) => {
   const { email, id_entidade, cpf_usuario, senha_hash, cargo, status_ativo } = req.body;
   
   if (!email || !id_entidade || !cpf_usuario || !senha_hash || !cargo) {
@@ -67,6 +64,5 @@ app.post('/cargos', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API de Governança rodando na porta ${port}`);
-});
+// Exporte apenas o roteador
+module.exports = router;

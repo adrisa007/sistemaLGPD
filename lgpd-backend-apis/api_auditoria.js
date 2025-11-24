@@ -1,13 +1,11 @@
 // api_auditoria.js
 const express = require('express');
-const { query } = require('./db');
-const app = express();
-app.use(express.json());
-
-const port = process.env.PORT || 8080;
+const { pool } = require('./db');
+const router = express.Router(); // Usar o Router do Express
 
 // Rota de saúde (Health Check)
-app.get('/', (req, res) => {
+// A rota raiz agora é relativa ao prefixo que será definido no server.js (ex: /auditoria)
+router.get('/health', (req, res) => {
   res.status(200).json({
     message: "API de Auditoria (Fase 2) - OK",
     service: "auditoria"
@@ -19,7 +17,7 @@ app.get('/', (req, res) => {
 // ##################################################################
 
 // POST /log: Cria um novo Registro de Log de Acesso
-app.post('/log', async (req, res) => {
+router.post('/log', async (req, res) => {
   const { id_uso, usuario_acessor, status_consentimento_momento } = req.body;
   
   if (!id_uso || !usuario_acessor || !status_consentimento_momento) {
@@ -31,7 +29,7 @@ app.post('/log', async (req, res) => {
       INSERT INTO LOG_ACESSO_DADOS (ID_USO, USUARIO_ACESSOR, STATUS_CONSENTIMENTO_MOMENTO)
       VALUES (?, ?, ?)
     `;
-    const result = await query(sql, [id_uso, usuario_acessor, status_consentimento_momento]);
+    const [result] = await pool.execute(sql, [id_uso, usuario_acessor, status_consentimento_momento]);
     
     res.status(201).json({ 
       message: "Log de acesso registrado com sucesso.", 
@@ -43,6 +41,4 @@ app.post('/log', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`API de Auditoria rodando na porta ${port}`);
-});
+module.exports = router;

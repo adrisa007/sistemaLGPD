@@ -33,37 +33,25 @@ steps:
 # Passo 4: Deploy do Monolito Modular (server.js)
 - name: 'gcr.io/cloud-builders/gcloud'
   id: Deploy Monolito LGPD
+  entrypoint: 'bash'
   args:
-  - 'run'
-  - 'deploy'
-  - 'lgpd-api-gateway' # Novo nome do serviço
-  - '--image'
-  - 'gcr.io/$PROJECT_ID/lgpd-backend-apis:$COMMIT_SHA'
-  - '--region'
-  - 'us-central1' # SUBSTITUA PELA SUA REGIÃO
-  - '--platform'
-  - 'managed'
-  - '--allow-unauthenticated' # Ajuste conforme sua necessidade de autenticação
-  - '--set-env-vars'
-  - 'DB_USER=$$DB_USER,DB_PASSWORD=$$DB_PASSWORD,DB_NAME=$$DB_NAME,INSTANCE_CONNECTION_NAME=$$INSTANCE_CONNECTION_NAME'
-  - '--set-cloudsql-instances'
-  - '$$INSTANCE_CONNECTION_NAME'
-  - '--command'
-  - 'npm'
-  - '--args'
-  - 'start' # Usa o script 'start' do package.json
-  env:
-  - 'DB_USER=${_DB_USER}'
-  - 'DB_PASSWORD=${_DB_PASSWORD}'
-  - 'DB_NAME=${_DB_NAME}'
-  - 'INSTANCE_CONNECTION_NAME=${_INSTANCE_CONNECTION_NAME}'
+  - '-c'
+  - |
+    gcloud run deploy lgpd-api-gateway \
+      --image gcr.io/$PROJECT_ID/lgpd-backend-apis:$COMMIT_SHA \
+      --region us-central1 \
+      --platform managed \
+      --allow-unauthenticated \
+      --set-cloudsql-instances ${_INSTANCE_CONNECTION_NAME} \
+      --set-env-vars "DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},INSTANCE_CONNECTION_NAME=${_INSTANCE_CONNECTION_NAME}" \
+      --update-secrets=DB_PASSWORD=db-password:latest
 
 # ##################################################################
 # VARIÁVEIS DE SUBSTITUIÇÃO (Definidas no Gatilho do Cloud Build)
 # ##################################################################
 substitutions:
   _DB_USER: 'root' # Usuário do Cloud SQL
-  _DB_PASSWORD: 'your-db-password' # Senha do Cloud SQL
+  # _DB_PASSWORD foi removido e será gerenciado pelo Secret Manager
   _DB_NAME: 'lgpd_db' # Nome do Banco de Dados
   _INSTANCE_CONNECTION_NAME: 'project-id:region:instance-name' # Conexão do Cloud SQL
   _API_AUDITORIA_URL: 'https://api-auditoria-xxxxxxxx-uc.a.run.app' # URL da API de Auditoria (DEVE SER ATUALIZADA APÓS O PRIMEIRO DEPLOY)

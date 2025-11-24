@@ -1,47 +1,56 @@
-// server.js (API Gateway/Monolito Modular)
 const express = require('express');
+const { pool, testConnection } = require('./db'); // Ajustado para o caminho correto
 const app = express();
-const PORT = process.env.PORT || 8080; // Usar 8080, padrão do Cloud Run
 
-// Middleware para processar JSON
-app.use(express.json());
+// Middlewares
+app.use(express.json()); // Adiciona o middleware para parsear JSON no corpo das requisições
 
-// Rota de saúde (Health Check) para o serviço principal
+// Importar Roteadores dos Módulos
+const governancaRouter = require('./api_governanca.js');
+const usoDadosRouter = require('./api_uso_dados.js');
+const auditoriaRouter = require('./api_auditoria.js');
+const solicitacoesRouter = require('./api_solicitacoes.js');
+const relatoriosRouter = require('./api_relatorios.js');
+
+// Rotas
 app.get('/', (req, res) => {
-  res.status(200).json({
-    message: "LGPD Backend API Gateway - OK",
-    status: "Running all modules"
+  res.status(200).send('API Gateway LGPD está funcionando!');
+});
+
+app.use('/governanca', governancaRouter);
+app.use('/uso-dados', usoDadosRouter);
+app.use('/auditoria', auditoriaRouter);
+app.use('/solicitacoes', solicitacoesRouter);
+app.use('/relatorios', relatoriosRouter);
+
+const PORT = process.env.PORT || 8080;
+let server;
+
+// Inicia o servidor e testa a conexão com o banco de dados
+if (require.main === module) {
+  server = app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
+    testConnection();
   });
-});
+}
 
-// ##################################################################
-// Importar e Usar as Rotas de Cada Módulo (APIs)
-// ##################################################################
+// Tratamento para encerramento gracioso (Graceful Shutdown)
+const gracefulShutdown = (signal) => {
+  console.log(`${signal} received. Closing HTTP server.`);
+  if (server) {
+    server.close(() => {
+      console.log('HTTP server closed.');
+      pool.end(err => {
+        if (err) console.error('Error closing the database connection pool:', err);
+        else console.log('Database connection pool closed.');
+        process.exit(err ? 1 : 0);
+      });
+    });
+  } else {
+    process.exit(0);
+  }
+};
 
-// 1. FASE 1: Governança (Entidades e Cargos)
-const governancaRoutes = require('./api_governanca');
-app.use('/governanca', governancaRoutes);
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-// 2. FASE 2: Uso de Dados (Titulares, Usos, Checagem)
-const usoDadosRoutes = require('./api_uso_dados');
-app.use('/uso-dados', usoDadosRoutes);
-
-// 3. FASE 2: Auditoria (Log de Acesso)
-const auditoriaRoutes = require('./api_auditoria');
-app.use('/auditoria', auditoriaRoutes);
-
-// 4. FASE 3: Solicitações (Direitos do Titular)
-const solicitacoesRoutes = require('./api_solicitacoes');
-app.use('/solicitacoes', solicitacoesRoutes);
-
-// 5. FASE 4: Relatórios (Auditoria e Prova Final)
-const relatoriosRoutes = require('./api_relatorios');
-app.use('/relatorios', relatoriosRoutes);
-
-// ##################################################################
-// Iniciar o Servidor
-// ##################################################################
-
-app.listen(PORT, () => {
-  console.log(`Servidor LGPD Backend rodando na porta ${PORT}`);
-});
+module.exports = app;
