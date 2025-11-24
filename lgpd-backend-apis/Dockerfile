@@ -17,9 +17,8 @@ COPY package*.json ./
 
 # Instala as dependências de produção e desenvolvimento
 # As dependências de desenvolvimento são necessárias para rodar os testes no Cloud Build
+# Instala TODAS as dependências (incluindo devDependencies para os testes)
 RUN npm install
-# Instala apenas as dependências de produção para otimizar a imagem final
-RUN npm install --production
 
 # --- STAGE 2: Produção (Imagem final) ---
 # --- Estágio 2: Produção ---
