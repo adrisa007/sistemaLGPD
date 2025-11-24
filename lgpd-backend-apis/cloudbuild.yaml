@@ -1,0 +1,32 @@
+# cloudbuild.yaml (Trecho)
+
+steps:
+# Passo 1: Instalar dependências e executar testes unitários
+- name: 'node:20-slim'
+  id: Testes Unitários
+  entrypoint: 'npm'
+  args: ['test']
+
+# ... (Passos de Build e Push) ...
+
+# Passo 4: Deploy da API de Governança (Fase 1)
+# ...
+
+# Passo 5: Deploy da API de Auditoria (Fase 2)
+# ...
+
+# Passo 6: Deploy da API de Uso de Dados (Fase 2) - Depende da URL da API de Auditoria
+# ...
+
+# Passo 7: Deploy da API de Solicitações (Fase 3)
+# ...
+
+# Passo 8: Deploy da API de Relatórios (Fase 4)
+# ...
+
+substitutions:
+  _DB_USER: 'root'
+  _DB_PASSWORD: 'your-db-password'
+  _DB_NAME: 'lgpd_db'
+  _INSTANCE_CONNECTION_NAME: 'project-id:region:instance-name'
+  _API_AUDITORIA_URL: 'https://api-auditoria-xxxxxxxx-uc.a.run.app' # DEVE SER ATUALIZADA
