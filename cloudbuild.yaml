@@ -13,7 +13,7 @@ steps:
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['version']
 
-serviceAccount: 'projects/seu-id-de-projeto/serviceAccounts/sua-conta-de-servico'
+serviceAccount: 'projects/project-1685bd27-89e0-4455-bda/serviceAccounts/989061074704-compute@developer.gserviceaccount.com'
 
 images:
   - 'gcr.io/$PROJECT_ID/sistemalgpd:latest'
