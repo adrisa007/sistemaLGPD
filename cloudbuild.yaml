@@ -49,3 +49,7 @@ steps:
 substitutions:
   _AR_REPO_NAME: 'lgpd-backend-repo' # Nome do repositório que você criou
   _AR_REGION: 'us-central1' # Região do repositório
+
+options:
+  # Usa o bucket de logs padrão gerenciado pelo usuário na região do projeto.
+  defaultLogsBucketBehavior: 'REGIONAL_USER_OWNED_BUCKET'
