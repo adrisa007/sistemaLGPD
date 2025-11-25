@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// src/App.jsx
+
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+// Componentes
+import Login from './pages/Login';
+import DashboardDPO from './pages/DashboardDPO'; // Criar este componente
+import DashboardOperador from './pages/DashboardOperador'; // Criar este componente
+import AcessoNegado from './pages/AcessoNegado'; // Criar este componente
+import PrivateRoute from './routes/PrivateRoute';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Router>
+      <Routes>
+        {/* 1. ROTA PÚBLICA (LOGIN) */}
+        <Route path="/login" element={<Login />} />
+        
+        {/* Rota inicial que redireciona para o login */}
+        <Route path="/" element={<Navigate to="/login" replace />} /> 
+
+        {/* 2. ROTAS PROTEGIDAS (DPO) */}
+        {/* O DPO pode acessar: DPO e Rotas compartilhadas (Ex: Operador, se necessário) */}
+        <Route element={<PrivateRoute allowedRoles={['DPO', 'Root_Admin']} />}>
+          <Route path="/dpo/dashboard" element={<DashboardDPO />} />
+          <Route path="/dpo/auditoria" element={<DashboardDPO />} />
+        </Route>
+
+        {/* 3. ROTAS PROTEGIDAS (OPERADOR) */}
+        <Route element={<PrivateRoute allowedRoles={['Operador', 'Root_Admin']} />}>
+          <Route path="/operador/uso-dados" element={<DashboardOperador />} />
+          <Route path="/operador/cadastro-titular" element={<DashboardOperador />} />
+        </Route>
+        
+        {/* 4. ROTA DE ERRO E CATCH-ALL */}
+        <Route path="/acesso-negado" element={<AcessoNegado />} />
+        <Route path="*" element={<h1>404: Página Não Encontrada</h1>} />
+
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;
