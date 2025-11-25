@@ -13,13 +13,7 @@ RUN npm ci --only=production
 
 # Copie o código-fonte da aplicação
 # Certifique-se de ter um arquivo .dockerignore para evitar copiar node_modules e outros arquivos desnecessários
-COPY . .
-
-# ...
-# Substitui 'COPY . .' e 'RUN chown...' por um único comando
 COPY --chown=node:node . .
-USER node
-# ...
 
 # Torne a porta 8080 acessível para o mundo fora deste contêiner
 EXPOSE 8080
