@@ -131,4 +131,4 @@ Sinta-se à vontade para abrir *issues* (problemas) ou enviar *pull requests* (s
 ---
 
 **Autor:** Adriano Isral
-**Licença:** ISC
+**Licença:** 
