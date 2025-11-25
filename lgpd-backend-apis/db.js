@@ -11,10 +11,10 @@ const poolConfig = {
   queueLimit: 0,
 };
 
-// Se a variável de ambiente INSTANCE_CONNECTION_NAME estiver definida (no Cloud Run),
+// Se a variável de ambiente CLOUD_SQL_CONNECTION_NAME estiver definida (no Cloud Run),
 // usa o socket Unix para a conexão. Caso contrário (desenvolvimento local), usa o host TCP.
-if (process.env.INSTANCE_CONNECTION_NAME) {
-  poolConfig.socketPath = `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`;
+if (process.env.CLOUD_SQL_CONNECTION_NAME) {
+  poolConfig.socketPath = `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`;
   // Garante que o host não seja usado no modo Cloud Run
   delete poolConfig.host; 
 } else {
@@ -42,24 +42,6 @@ module.exports = {
   pool,
   // Exporta a função de teste para ser usada no index.js
   testConnection,
-  // 🔑 NOVO: Exporta o método 'query' do pool para simplificar o uso em outros módulos (como api_auth.js)
+  // NOVO: Exporta o método 'query' do pool para simplificar o uso em outros módulos (como api_auth.js)
   query: pool.query, 
 };
-```
-eof
-
-### Resumo da Mudança
-
-Adicionei apenas a linha:
-```javascript
-query: pool.query,
-```
-ao objeto `module.exports`.
-
-Essa pequena mudança permite que o seu módulo de autenticação importe e use a função de consulta de forma limpa:
-
-```javascript
-// Dentro de api_auth.js
-const { query } = require('./db'); 
-// ...
-const rows = await query('SELECT * FROM CARGOS...');
