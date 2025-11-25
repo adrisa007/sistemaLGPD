@@ -1,10 +1,6 @@
 # Use uma imagem oficial do Node.js como imagem base
 FROM node:18-slim
 
-# Crie um usuário não-root para executar a aplicação
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 node
-
 # Defina o diretório de trabalho no contêiner
 WORKDIR /usr/src/app
 
