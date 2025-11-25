@@ -1,6 +1,0 @@
-# Ignora a pasta de dependências do Node.js
-node_modules
-
-# Arquivos de log e de ambiente que não devem ir para a imagem
-npm-debug.log
-.env

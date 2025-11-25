@@ -1,32 +1,32 @@
-# Estágio 1: Builder - Instala dependências e compila o que for necessário
-FROM node:18-alpine AS builder
+# Use uma imagem oficial do Node.js como imagem base
+FROM node:18-slim
 
-# Define o diretório de trabalho dentro do contêiner
+# Crie um usuário não-root para executar a aplicação
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 node
+
+# Defina o diretório de trabalho no contêiner
 WORKDIR /usr/src/app
 
-# Copia os arquivos de manifesto de dependências
+# Copie o package.json e o package-lock.json
 COPY package*.json ./
 
-# Instala SOMENTE as dependências de produção.
-# Isso evita incluir pacotes de desenvolvimento (como jest, supertest) na imagem final.
-RUN npm install --only=production
+# Instale apenas as dependências de produção
+# O 'npm ci' é mais rápido e seguro para builds em CI/CD
+RUN npm ci --only=production
 
-# Copia o restante do código-fonte da aplicação
+# Copie o código-fonte da aplicação
+# Certifique-se de ter um arquivo .dockerignore para evitar copiar node_modules e outros arquivos desnecessários
 COPY . .
 
-# --------------------------------------------------------------------
+# Mude a propriedade dos arquivos para o usuário não-root
+RUN chown -R node:nodejs .
 
-# Estágio 2: Production - Cria a imagem final e enxuta
-FROM node:18-alpine
-
-WORKDIR /usr/src/app
-
-# Copia as dependências já instaladas e o código-fonte do estágio 'builder'
-COPY --from=builder /usr/src/app/node_modules ./node_modules
-COPY --from=builder /usr/src/app .
-
-# Expõe a porta que a sua aplicação Express vai usar (o padrão para Cloud Run é 8080)
+# Torne a porta 8080 acessível para o mundo fora deste contêiner
 EXPOSE 8080
 
-# Comando para iniciar a aplicação quando o contêiner for executado
+# Mude para o usuário não-root
+USER node
+
+# Defina o comando para executar sua aplicação
 CMD [ "node", "index.js" ]
