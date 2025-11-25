@@ -1,29 +1,32 @@
-# Dockerfile para a aplicação Node.js (lgpd-backend-apis)
+# Estágio 1: Builder - Instala dependências e compila o que for necessário
+FROM node:18-alpine AS builder
 
-# --- Estágio 1: Builder ---
-# Este estágio é usado pelo Cloud Build para instalar TODAS as dependências e rodar os testes.
-FROM node:20-slim AS builder
-
-WORKDIR /usr/src/app
-COPY package*.json ./
-RUN npm install
-
-# --- Estágio 2: Produção ---
-# Usa uma imagem Node.js mínima para a execução, resultando em uma imagem final menor e mais segura.
-FROM node:20-slim AS production
-
+# Define o diretório de trabalho dentro do contêiner
 WORKDIR /usr/src/app
 
+# Copia os arquivos de manifesto de dependências
 COPY package*.json ./
 
-# Instala APENAS as dependências de produção, criando uma imagem final mais enxuta.
-RUN npm install --production
+# Instala SOMENTE as dependências de produção.
+# Isso evita incluir pacotes de desenvolvimento (como jest, supertest) na imagem final.
+RUN npm install --only=production
 
-# Copia o restante do código da aplicação
+# Copia o restante do código-fonte da aplicação
 COPY . .
 
-# Expõe a porta que a aplicação usa (ajuste se for diferente)
+# --------------------------------------------------------------------
+
+# Estágio 2: Production - Cria a imagem final e enxuta
+FROM node:18-alpine
+
+WORKDIR /usr/src/app
+
+# Copia as dependências já instaladas e o código-fonte do estágio 'builder'
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app .
+
+# Expõe a porta que a sua aplicação Express vai usar (o padrão para Cloud Run é 8080)
 EXPOSE 8080
 
-# Comando para iniciar a aplicação
-CMD ["npm", "start"]
+# Comando para iniciar a aplicação quando o contêiner for executado
+CMD [ "node", "index.js" ]
