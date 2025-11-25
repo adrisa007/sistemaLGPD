@@ -20,7 +20,7 @@ const startServer = async () => {
         await testConnection(); 
         
         // 2. Se o teste de conexão passou, inicia o servidor Express
-        server = app.listen(PORT, () => {
+        server = app.listen(PORT, '0.0.0.0', () => {
             console.log(`Server listening on port ${PORT}`);
             console.log('API Gateway LGPD está PRONTO!');
         });
