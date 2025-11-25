@@ -9,8 +9,8 @@ COPY package*.json ./
 
 # Instale apenas as dependências de produção
 # O 'npm ci' é mais rápido e seguro para builds em CI/CD
-RUN npm ci --only=production
-
+# RUN npm ci --only=production
+RUN npm ci --omit=dev
 # Copie o código-fonte da aplicação
 # Certifique-se de ter um arquivo .dockerignore para evitar copiar node_modules e outros arquivos desnecessários
 COPY --chown=node:node . .
