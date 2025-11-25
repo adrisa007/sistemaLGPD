@@ -22,4 +22,4 @@ EXPOSE 8080
 USER node
 
 # Defina o comando para executar sua aplicação
-CMD [ "node", "index.js" ]
+CMD [ "npm", "start" ]

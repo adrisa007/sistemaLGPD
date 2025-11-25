@@ -4,8 +4,7 @@
   "description": "APIs de Governança, Uso de Dados, Auditoria, Solicitações e Relatórios para o Sistema de Conformidade LGPD",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "jest"
+    "start": "node index.js"
   },
   "dependencies": {
     "axios": "^1.6.5",
