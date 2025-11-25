@@ -51,7 +51,7 @@ substitutions:
   _DB_USER: 'root' # Usuário do Cloud SQL
   # _DB_PASSWORD foi removido e será gerenciado pelo Secret Manager
   _DB_NAME: 'lgpd_db' # Nome do Banco de Dados
-  _INSTANCE_CONNECTION_NAME: 'project-id:region:instance-name' # Conexão do Cloud SQL
+  _INSTANCE_CONNECTION_NAME: 'project-1685bd27-89e0-4455-bda:us-central1:lgpd-db-instance' # Conexão do Cloud SQL
   _API_AUDITORIA_URL: 'https://api-auditoria-xxxxxxxx-uc.a.run.app' # URL da API de Auditoria (DEVE SER ATUALIZADA APÓS O PRIMEIRO DEPLOY)
   # ... (outras variáveis) ...
   _AR_REPO_NAME: 'lgpd-backend-repo' # Nome do repositório que você criou
