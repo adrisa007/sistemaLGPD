@@ -1,66 +1,71 @@
-//server.js - Configuração do servidor Express e middlewares
+// server.js - Configuração e Middlewares do Express
 const express = require('express');
-const cors = require('cors'); // 🔑 Essencial para o Frontend
-const helmet = require('helmet'); // Boa prática de segurança
+const cors = require('cors'); // Middleware CORS (essencial para comunicação Frontend/Backend)
+const morgan = require('morgan'); // Para logging de requisições HTTP (útil para debug)
+
+// Importa as Rotas
+const authRoutes = require('./api_auth'); // Rotas de Autenticação (Login)
+const auditoriaRoutes = require('./api_auditoria'); // Rotas de Auditoria
+// Importe as outras rotas conforme necessário (governança, relatórios, etc.)
+
 const app = express();
 
-// --- 1. Middlewares de Segurança e Parsing ---
+// --- Middlewares Essenciais ---
 
-// Habilita o CORS. Permite que o frontend React acesse a API.
-// Em um ambiente de produção final, você deve configurar para permitir apenas a URL do seu frontend.
+// 1. Logging de Requisições
+app.use(morgan('combined')); 
+
+// 2. CORREÇÃO CORS
+// ESSENCIAL para permitir que o Frontend no Codespace (URL dinâmica) se comunique com a API no Cloud Run.
+// Em produção, você idealmente limitaria 'origin' ao domínio final do seu frontend.
 app.use(cors({
-    origin: '*', // Temporariamente permite todas as origens para o desenvolvimento no Codespaces/github.dev
+    origin: '*', // Permite todas as origens (para desenvolvimento)
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'] // Permite cabeçalhos necessários para JWT
 }));
 
-// Adiciona headers de segurança (como XSS protection, etc.)
-app.use(helmet()); 
-
-// Middleware para parsear o corpo das requisições como JSON
-app.use(express.json()); 
-
-// --- 2. Importar Roteadores dos Módulos ---
-
-// 🔑 Roteador de AUTENTICAÇÃO: O seu frontend precisa deste módulo para fazer login.
-const authRouter = require('./api_auth.js'); 
-
-const governancaRouter = require('./api_governanca.js');
-const usoDadosRouter = require('./api_uso_dados.js');
-const auditoriaRouter = require('./api_auditoria.js');
-const solicitacoesRouter = require('./api_solicitacoes.js');
-const relatoriosRouter = require('./api_relatorios.js');
+// 3. Parser de Corpo (Body Parser)
+// Permite que a aplicação leia dados JSON enviados no corpo da requisição (POST/PUT)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 
-// --- 3. Rotas Base (Mapeamento com Prefixo /api/v1) ---
+// --- Rotas da API ---
 
-// Rota de Teste de Saúde (Health Check)
-app.get('/', (req, res) => {
-  res.status(200).send('API Gateway LGPD está funcionando!');
+// Rota de Status (Health Check)
+app.get('/status', (req, res) => {
+    res.status(200).send({ message: 'API LGPD está saudável e operacional!' });
 });
 
-// Mapeamento das rotas dos módulos
-app.use('/api/v1/auth', authRouter); // 🔑 Rota de Login/Autenticação
-app.use('/api/v1/governanca', governancaRouter);
-app.use('/api/v1/uso-dados', usoDadosRouter);
-app.use('/api/v1/auditoria', auditoriaRouter);
-app.use('/api/v1/solicitacoes', solicitacoesRouter);
-app.use('/api/v1/relatorios', relatoriosRouter);
+// Rotas de Autenticação (Login)
+app.use('/api/v1/auth', authRoutes);
+
+// Rotas Protegidas (Exemplo: auditoria)
+app.use('/api/v1/auditoria', auditoriaRoutes);
+
+// Adicione as outras rotas aqui:
+// app.use('/api/v1/governanca', governancaRoutes);
+// app.use('/api/v1/solicitacoes', solicitacoesRoutes);
+// app.use('/api/v1/relatorios', relatoriosRoutes);
+// app.use('/api/v1/uso-dados', usoDadosRoutes);
 
 
-// --- 4. Tratamento de Erro (Middlewares Finais) ---
+// --- Tratamento de Erros ---
 
-// Lida com rotas não encontradas (404)
+// Tratamento de rota não encontrada (404)
 app.use((req, res, next) => {
-    res.status(404).json({ message: 'Recurso não encontrado (404)' });
+    const error = new Error(`Não Encontrado - ${req.originalUrl}`);
+    res.status(404);
+    next(error);
 });
 
-// Middleware de Tratamento de Erro Geral
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(err.status || 500).json({ 
-        message: 'Erro interno do servidor.',
-        detail: err.message
+// Handler de Erros Genericos
+app.use((error, req, res, next) => {
+    const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+    res.status(statusCode);
+    res.json({
+        message: error.message,
+        stack: process.env.NODE_ENV === 'production' ? '🥞' : error.stack // Oculta o stack em produção
     });
 });
 
