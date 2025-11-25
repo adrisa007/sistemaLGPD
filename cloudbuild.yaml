@@ -12,13 +12,12 @@ steps:
   # - 3 instrui o Cloud Build a usar automaticamente um bucket padrão que ele gerencia na região do seu projeto.
   - name: 'gcr.io/cloud-builders/gcloud'
     args: ['version']
-    serviceAccount: 'projects/seu-id-de-projeto/serviceAccounts/sua-conta-de-servico'
-options:
-    defaultLogsBucketBehavior: 'REGIONAL_USER_OWNED_BUCKET'
+
+serviceAccount: 'projects/seu-id-de-projeto/serviceAccounts/sua-conta-de-servico'
 
 images:
   - 'gcr.io/$PROJECT_ID/sistemalgpd:latest'
 
 options:
-  # Envia os logs apenas para o Cloud Logging, em vez de um bucket do Cloud Storage.
-  logging: CLOUD_LOGGING_ONLY
+  # Usa o bucket de logs padrão gerenciado pelo usuário na região do projeto.
+  defaultLogsBucketBehavior: 'REGIONAL_USER_OWNED_BUCKET'
