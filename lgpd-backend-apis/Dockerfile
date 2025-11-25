@@ -15,8 +15,11 @@ RUN npm ci --only=production
 # Certifique-se de ter um arquivo .dockerignore para evitar copiar node_modules e outros arquivos desnecessários
 COPY . .
 
-# Mude a propriedade dos arquivos para o usuário não-root
-RUN chown -R node:nodejs .
+# ...
+# Substitui 'COPY . .' e 'RUN chown...' por um único comando
+COPY --chown=node:node . .
+USER node
+# ...
 
 # Torne a porta 8080 acessível para o mundo fora deste contêiner
 EXPOSE 8080
