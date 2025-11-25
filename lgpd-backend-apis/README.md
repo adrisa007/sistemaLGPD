@@ -25,3 +25,6 @@ O deploy é totalmente automatizado via **Google Cloud Build** e **Cloud Run**, 
 | `_DB_USER` | Usuário do Cloud SQL | `root` |
 | `_API_AUDITORIA_URL` | URL da API de Auditoria (para `api-uso-dados`) | `https://api-auditoria-xxxx.run.app` |
 ...
+
+
+...
