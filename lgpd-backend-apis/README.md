@@ -128,7 +128,4 @@ Sinta-se à vontade para abrir *issues* (problemas) ou enviar *pull requests* (s
 4.  Envie para o *branch* (`git push origin feature/nova-funcionalidade`).
 5.  Abra um *Pull Request* detalhado.
 
----
 
-**Autor:** Adriano Isral
-**Licença:** 
