@@ -9,6 +9,13 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/sistemalgpd:latest']
 
+  # - 3 instrui o Cloud Build a usar automaticamente um bucket padrão que ele gerencia na região do seu projeto.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['version']
+    serviceAccount: 'projects/seu-id-de-projeto/serviceAccounts/sua-conta-de-servico'
+options:
+    defaultLogsBucketBehavior: 'REGIONAL_USER_OWNED_BUCKET'
+
 images:
   - 'gcr.io/$PROJECT_ID/sistemalgpd:latest'
 
