@@ -11,3 +11,7 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/sistemalgpd:latest'
+
+options:
+  # Envia os logs apenas para o Cloud Logging, em vez de um bucket do Cloud Storage.
+  logging: CLOUD_LOGGING_ONLY
