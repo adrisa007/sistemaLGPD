@@ -21,8 +21,8 @@ const startServer = async () => {
         
         // 2. Se o teste de conexão passou, inicia o servidor Express
         server = app.listen(PORT, '0.0.0.0', () => {
-            console.log(`Server listening on port ${PORT}`);
-            console.log('API Gateway LGPD está PRONTO!');
+            console.log(`Servidor escutando na porta ${PORT}`);
+            console.log('API Gateway LGPD está pronta para receber requisições!');
         });
         
         // Configura o tratamento de sinais de encerramento após o servidor iniciar
@@ -38,18 +38,18 @@ const startServer = async () => {
 
 // --- Tratamento para encerramento gracioso (Graceful Shutdown) ---
 const gracefulShutdown = (signal) => {
-    console.log(`${signal} received. Closing HTTP server.`);
+    console.log(`Sinal ${signal} recebido. Encerrando o servidor HTTP.`);
     
     // 1. Fecha o servidor HTTP para parar de aceitar novas requisições
     if (server) {
         server.close(() => {
-            console.log('HTTP server closed.');
+            console.log('Servidor HTTP encerrado.');
             
             // 2. Fecha o pool de conexões do banco de dados
             if (pool) {
                 pool.end(err => {
-                    if (err) console.error('Error closing the database connection pool:', err);
-                    else console.log('Database connection pool closed.');
+                    if (err) console.error('Erro ao fechar o pool de conexões do banco de dados:', err);
+                    else console.log('Pool de conexões do banco de dados fechado.');
                     process.exit(err ? 1 : 0);
                 });
             } else {
