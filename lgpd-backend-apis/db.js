@@ -1,40 +1,67 @@
-//db.js - Configuração do Pool de Conexões com MySQL
+// db.js - Configuração do Pool de Conexões com MySQL
+
 const mysql = require('mysql2/promise');
 
-// Configuração do Pool de Conexões
+// Configuração base do Pool de Conexões (lê as variáveis do ambiente)
 const poolConfig = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  
+  // Configurações de pool
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 };
 
-// Se a variável de ambiente CLOUD_SQL_CONNECTION_NAME estiver definida (no Cloud Run),
-// usa o socket Unix para a conexão. Caso contrário (desenvolvimento local), usa o host TCP.
+// ESSENCIAL: Lógica para alternar entre Cloud Run (Socket) e Desenvolvimento Local (Host/TCP)
 if (process.env.CLOUD_SQL_CONNECTION_NAME) {
+  // Cloud Run: Usa o socket path injetado pelo proxy do Cloud SQL
   poolConfig.socketPath = `/cloudsql/${process.env.CLOUD_SQL_CONNECTION_NAME}`;
-  // Garante que o host não seja usado no modo Cloud Run
+  
+  // Remove 'host' para evitar conflito com o socket path
   delete poolConfig.host; 
+  console.log('Modo de conexão: Cloud Run (Socket Unix)');
 } else {
+  // Desenvolvimento local: Usa host ou 127.0.0.1
   poolConfig.host = process.env.DB_HOST || '127.0.0.1';
+  console.log(`Modo de conexão: Local (Host: ${poolConfig.host})`);
 }
 
 const pool = mysql.createPool(poolConfig);
 
-// Função para testar a conexão
+// Função para testar a conexão com o banco de dados antes de iniciar o servidor Express
 const testConnection = async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log('Successfully connected to the database.');
-    connection.release(); // Libera a conexão de volta para o pool
-  } catch (error) {
-    console.error('Failed to connect to the database:', error);
-    // Encerra a aplicação se a conexão com o DB falhar na inicialização (Cloud Run)
-    console.error('Application will exit...');
-    process.exit(1); 
-  }
+    let connection;
+    try {
+        console.log('--- TESTE DB INICIADO ---');
+        console.log('Tentando obter uma conexão com o banco de dados...');
+        
+        // Tenta obter uma conexão. Se falhar, lança o erro.
+        connection = await pool.getConnection(); 
+        
+        // Libera a conexão de volta para o pool
+        connection.release(); 
+        
+        console.log('Conexão com o banco de dados estabelecida com sucesso. ✅');
+        console.log('--- TESTE DB CONCLUÍDO ---');
+        return true;
+        
+    } catch (error) {
+        // # MELHORIA NO LOGGING (Crucial para Cloud Run) #
+        // Imprime a mensagem de erro específica do MySQL de forma fácil de buscar.
+        console.error('##################################################');
+        console.error('### ERRO FATAL: FALHA AO CONECTAR AO CLOUD SQL ### 🚨');
+        console.error(`### MENSAGEM DO DB: ${error.message} ###`); 
+        console.error('##################################################');
+
+        if (connection) {
+            connection.release();
+        }
+        
+        // Encerra a aplicação para que o Cloud Run registre a falha.
+        process.exit(1); 
+    }
 };
 
 module.exports = {
@@ -42,6 +69,6 @@ module.exports = {
   pool,
   // Exporta a função de teste para ser usada no index.js
   testConnection,
-  // NOVO: Exporta o método 'query' do pool para simplificar o uso em outros módulos (como api_auth.js)
+  // Exporta o método 'query' do pool para simplificar o uso
   query: pool.query, 
 };
